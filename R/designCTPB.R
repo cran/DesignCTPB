@@ -1,6 +1,5 @@
 #' Optimal design for 3-dimensional with visulization
 #' @description This function uses GPU parallel computing to calculate the high dimensional integral and apply the smoothing method(thin plate splines) to get the optimum of power values given the prior information: the harzard reduction distribution. This function guides to choose the size of nested populations, i.e. find optimal r-values. The function visualizes and optimizes r-values, but only supports 3-dimension. The optimization of r-values in more than 3-dimension is trivial, but visualization can be too hard.
-#'
 #' @param m integer, the number of grid points in each dimension for r, and we suggest m around 20 is enough for 3 dimension
 #' @param n_dim integer, the number of dimension
 #' @param r_set the matrix of proportion for each sub-population, r_1 is 1, r_i>r_{i+1}
@@ -13,13 +12,14 @@
 #' @param DELTA matrix, each row is an vector stands for the point estimation of harzard reduction in prior information corresponds to the r setting, if not specified we apply a linear scheme by giving bound to the linear harzard reduction 
 #' @param delta_linear_bd vector of length 2, specifying the upper bound and lower bound for the harzard reduction; if user don't specify the delta for each sub-population, then the linear scheme will apply and the input is a must. 
 #' @param seed integer,  seed for random number generation
+#' @importFrom magrittr %>%
 #' @return list of 5 parts: plot_power: 3-d plot of the optimal power values versus r2 and r3; plot_alpha: 3-d plot of the optimal alpha-split values versus r2 and r3; opt_r_split: the optimal choice of proportion for each sub-population; opt_power: the optimal power values with the optimal r choice; opt_alpha_split: the optimal alpha split with the optimal r choice
 #' @details the standard deviation of each population can be specified by giving SIGMA as input, and specify the harzard reduction rate DELTA for each population. Just enter values to SIGMA and DELTA, but note that the entered matrix should coincides with the matrix of r-split setting.
-#' @seealso Grid setting of proportions for each sub-population [r_setting()] and [alpha_split()] 
+#' @seealso Grid setting of proportions for each sub-population proportion() and alpha.split()
 #' @examples
 #' \dontrun{
 #' # the default setting of our paper's strong biomarker effect 
-#' res <- design_ctpb()
+#' res <- designCTPB()
 #' res$plot_power # to see 3-d plot for the optimal power versus r2 and r3
 #' res$plot_alpha # to see 3-d plot for the optimal alpha versus r2 and r3
 #' res$opt_r_split #  to see the optimal cutoff of the sub-population, 
@@ -28,8 +28,8 @@
 #' res$opt_alpha_split
 #'}
 #' @export
-design_ctpb <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000, E=NULL, SIGMA=NULL, sd_full=1/base::sqrt(20), DELTA=NULL, delta_linear_bd=c(0.2,0.8), seed=NULL){
-  
+designCTPB <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000, E=NULL, SIGMA=NULL, sd_full=1/base::sqrt(20), DELTA=NULL, delta_linear_bd=c(0.2,0.8), seed=NULL){
+
   opt_res <- Optim_Res(m, r_set, n_dim, N1, N2, N3, E, SIGMA, sd_full, DELTA, delta_linear_bd, seed)
   r_setting <- as.matrix(opt_res[,1:n_dim]); opt_alpha <- as.matrix(opt_res[,(n_dim+1):(2*n_dim)]); opt_power <- opt_res[,NCOL(opt_res)]
   # we only develop for 3-dim right now, but we can easily extend it into higher dimensional case
@@ -55,13 +55,15 @@ design_ctpb <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000
       }
     }
     # 3d-plot of optimal power versus r2 & r3
-    if (requireNamespace("dplyr", quitely=TRUE)&&requireNamespace("plotly", quietly=TRUE)){
-    fig.optim.power <-  magrittr::`%>%`(plotly::plot_ly(x=r2, y=r3, z=t(Power)),  magrittr::`%>%`(plotly::add_surface(),plotly::layout(scene=list(camera=list(eye=list(x=2, y=-1, z=0.34)),
-                                                                                                                                                  xaxis = list(title = "r2"),
-                                                                                                                                                  yaxis = list(title ="r3"),
-                                                                                                                                                  zaxis = list(title = "Optimal Power ")))) 
-    )
+    if (requireNamespace("plotly", quietly=TRUE) && requireNamespace("magrittr", quietly=TRUE)){
+        fig.optim.power <- plotly::plot_ly(x=r2, y=r3, z=t(Power)) %>% plotly::add_surface() %>% plotly::layout(scene = list(camera=list(
+          eye = list(x=2, y=-1, z=0.34)),
+          xaxis = list(title = "r2"),
+          yaxis = list(title ="r3"),
+          zaxis = list(title = "Optimal Power ")))
     }
+    
+    
      #alpha
     f1 = function(x,y){
       new=data.frame(r2=x,r3=y)
@@ -90,14 +92,17 @@ design_ctpb <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000
       }
     }
     # 3d-plot of optimal alpha versus r2 & r3
-    if (requireNamespace("dplyr", quitely=TRUE)&&requireNamespace("plotly", quietly=TRUE)){
-    fig.alpha <- plotly::plot_ly() #showscale = FALSE)
-    fig.alpha <- magrittr::`%>%`(fig.alpha,magrittr::`%>%`(plotly::add_surface(x=r2,y=r3,z=t(pre_alpha1)), magrittr::`%>%`(plotly::add_data(data1),plotly::add_markers(x=~r2, y=~r3, z=~alpha1, size=2,symbol= 0,name = "alpha1")))) 
-    fig.alpha <- magrittr::`%>%`(fig.alpha, magrittr::`%>%`(plotly::add_surface(x=r2,y=r3,z= t(pre_alpha2),opacity = 0.98), magrittr::`%>%`( plotly::add_data(data2),plotly::add_markers(x=~r2, y=~r3, z=~alpha2, size=2,symbol= 100,name = "alpha2") ) ))
-    fig.alpha <- magrittr::`%>%`(fig.alpha,  magrittr::`%>%`(plotly::add_surface(x=r2,y=r3,z=t(pre_alpha3),opacity = 0.98), magrittr::`%>%`(plotly::add_data(data3),  magrittr::`%>%`(plotly::add_markers(x=~r2, y=~r3, z=~alpha3, size=2,symbol= 200,name = "alpha3"), plotly::layout(scene=list(camera=list(eye=list(x=2, y=-1, z=0.34)),
-                                                                                                                                                                                                                                                                                                   xaxis = list(title = "r2"),
-                                                                                                                                                                                                                                                                                                   yaxis = list(title ="r3"),
-                                                                                                                                                                                                                                                                                                   zaxis = list(title = "Optimal alpha"))) ))))}      
+    if (requireNamespace("magrittr", quitely=TRUE)&&requireNamespace("plotly", quietly=TRUE)){
+      fig.alpha <- plotly::plot_ly()
+      fig.alpha <- fig.alpha %>% plotly::add_surface(x=r2,y=r3,z=t(pre_alpha1)) %>% plotly::add_data(data1) %>% plotly::add_markers(x=~r2, y=~r3, z=~alpha1, size=2,symbol= 0,name = "alpha1")
+      fig.alpha <- fig.alpha %>% plotly::add_surface(x=r2,y=r3,z= t(pre_alpha2),opacity = 0.98) %>% plotly::add_data(data2) %>% plotly::add_markers(x=~r2, y=~r3, z=~alpha2, size=2,symbol= 100,name = "alpha2") 
+      fig.alpha <- fig.alpha %>% plotly::add_surface(x=r2,y=r3,z=t(pre_alpha3),opacity = 0.98) %>% plotly::add_data(data3) %>% plotly::add_markers(x=~r2, y=~r3, z=~alpha3, size=2,symbol= 200,name = "alpha3")
+      fig.alpha <- fig.alpha %>% plotly::layout(scene=list(
+        camera=list(eye = list(x=2, y=-1, z=0.34)),
+        xaxis = list(title = "r2"),
+        yaxis = list(title ="r3"),
+        zaxis = list(title = "Optimal alpha")))
+    }
     # obtain the optimal power at cutoff of r2 and r3 to decide whether cut or not
     y <- function(x){
       new=data.frame(r2=x[1],r3=x[2])
@@ -117,4 +122,9 @@ design_ctpb <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000
   
   return(list(plot_power=fig.optim.power, plot_alpha = fig.alpha, opt_r_split = opt_r, opt_power = -opt$value, opt_alpha_split= ct_opt_alpha))
 }
+
+
+
+
+
 

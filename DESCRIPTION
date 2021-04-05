@@ -1,7 +1,7 @@
 Package: DesignCTPB
 Type: Package
 Title: Design Clinical Trials with Potential Biomarker Effect
-Version: 0.4.0
+Version: 1.1.1
 Authors@R: c(person("Yitao", "Lu", email = "yitaolu@uvic.ca", 
   role = c("aut","cre"),comment = c(ORCID = "0000-0002-0523-7416")), 
   person("Belaid", email = "bmoa@uvic.ca", 
@@ -22,13 +22,13 @@ NeedsCompilation: no
 Config/reticulate: list( packages = list( list(package = "scipy", pip =
         TRUE), list(package = "numba", pip = TRUE), list(package =
         "pandas", pip = TRUE) ) )
-Packaged: 2021-01-18 13:11:05 UTC; michael
-Imports: reticulate, mnormt, fields, magrittr
-Suggests: knitr, rmarkdown, dplyr, plotly,
+Packaged: 2021-04-05 07:29:48 UTC; michael
+Imports: reticulate, mnormt, fields, magrittr,plotly
+Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
-Depends: R (>= 2.10)
-SystemRequirements: NVIDIA CUDA GPU with compute capability 3.0 or
-        above and NVIDIA CUDA Toolkit 9.0 or above
+Depends: R (>= 3.5.0)
+SystemRequirements: OpenSSL(>= 1.0.1), NVIDIA CUDA GPU with compute
+        capability 3.0 or above and NVIDIA CUDA Toolkit 9.0 or above
 Author: Yitao Lu [aut, cre] (<https://orcid.org/0000-0002-0523-7416>),
   Belaid [aut],
   Julie Zhou [aut],
@@ -36,4 +36,4 @@ Author: Yitao Lu [aut, cre] (<https://orcid.org/0000-0002-0523-7416>),
   Xuekui Zhang [aut] (<https://orcid.org/0000-0003-4728-2343>)
 Maintainer: Yitao Lu <yitaolu@uvic.ca>
 Repository: CRAN
-Date/Publication: 2021-01-21 09:10:12 UTC
+Date/Publication: 2021-04-05 13:50:15 UTC
