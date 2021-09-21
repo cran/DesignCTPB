@@ -2,4 +2,3 @@
 
 export(alpha.split)
 export(designCTPB)
-importFrom(magrittr,"%>%")

@@ -12,7 +12,6 @@
 #' @param DELTA matrix, each row is an vector stands for the point estimation of harzard reduction in prior information corresponds to the r setting, if not specified we apply a linear scheme by giving bound to the linear harzard reduction 
 #' @param delta_linear_bd vector of length 2, specifying the upper bound and lower bound for the harzard reduction; if user don't specify the delta for each sub-population, then the linear scheme will apply and the input is a must. 
 #' @param seed integer,  seed for random number generation
-#' @importFrom magrittr %>%
 #' @return list of 5 parts: plot_power: 3-d plot of the optimal power values versus r2 and r3; plot_alpha: 3-d plot of the optimal alpha-split values versus r2 and r3; opt_r_split: the optimal choice of proportion for each sub-population; opt_power: the optimal power values with the optimal r choice; opt_alpha_split: the optimal alpha split with the optimal r choice
 #' @details the standard deviation of each population can be specified by giving SIGMA as input, and specify the harzard reduction rate DELTA for each population. Just enter values to SIGMA and DELTA, but note that the entered matrix should coincides with the matrix of r-split setting.
 #' @seealso Grid setting of proportions for each sub-population proportion() and alpha.split()
@@ -55,14 +54,16 @@ designCTPB <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000,
       }
     }
     # 3d-plot of optimal power versus r2 & r3
-    if (requireNamespace("plotly", quietly=TRUE) && requireNamespace("magrittr", quietly=TRUE)){
-        fig.optim.power <- plotly::plot_ly(x=r2, y=r3, z=t(Power)) %>% plotly::add_surface() %>% plotly::layout(scene = list(camera=list(
-          eye = list(x=2, y=-1, z=0.34)),
-          xaxis = list(title = "r2"),
-          yaxis = list(title ="r3"),
-          zaxis = list(title = "Optimal Power ")))
+    if (requireNamespace("dplyr", quitely=TRUE)&&requireNamespace("plotly", quietly=TRUE)){
+      fig_ <- plotly::plot_ly(x = r2, y = r3, z = t(Power))
+      fig_ <- plotly::add_surface(fig_)
+      fig_ <- plotly::layout(fig_,
+                             scene = list(camera = list(eye = list(x = 2, y = -1, z = 0.34)),
+                                          xaxis = list(title = "r2"),
+                                          yaxis = list(title = "r3"),
+                                          zaxis = list(title = "Optimal Power ")))
+      fig.optim.power <- fig_
     }
-    
     
      #alpha
     f1 = function(x,y){
@@ -92,16 +93,24 @@ designCTPB <- function(m=24, r_set = NULL, n_dim=3, N1=20480, N2=10240, N3=2000,
       }
     }
     # 3d-plot of optimal alpha versus r2 & r3
-    if (requireNamespace("magrittr", quitely=TRUE)&&requireNamespace("plotly", quietly=TRUE)){
-      fig.alpha <- plotly::plot_ly()
-      fig.alpha <- fig.alpha %>% plotly::add_surface(x=r2,y=r3,z=t(pre_alpha1)) %>% plotly::add_data(data1) %>% plotly::add_markers(x=~r2, y=~r3, z=~alpha1, size=2,symbol= 0,name = "alpha1")
-      fig.alpha <- fig.alpha %>% plotly::add_surface(x=r2,y=r3,z= t(pre_alpha2),opacity = 0.98) %>% plotly::add_data(data2) %>% plotly::add_markers(x=~r2, y=~r3, z=~alpha2, size=2,symbol= 100,name = "alpha2") 
-      fig.alpha <- fig.alpha %>% plotly::add_surface(x=r2,y=r3,z=t(pre_alpha3),opacity = 0.98) %>% plotly::add_data(data3) %>% plotly::add_markers(x=~r2, y=~r3, z=~alpha3, size=2,symbol= 200,name = "alpha3")
-      fig.alpha <- fig.alpha %>% plotly::layout(scene=list(
-        camera=list(eye = list(x=2, y=-1, z=0.34)),
-        xaxis = list(title = "r2"),
-        yaxis = list(title ="r3"),
-        zaxis = list(title = "Optimal alpha")))
+    if (requireNamespace("dplyr", quitely=TRUE)&&requireNamespace("plotly", quietly=TRUE)){
+      
+      fig.alpha <- plotly::plot_ly() #showscale = FALSE)
+      fig.alpha <- plotly::add_surface(fig.alpha, x = r2, y = r3, z = t(pre_alpha1))
+      fig.alpha <- plotly::add_data(fig.alpha, data1)
+      fig.alpha <- plotly::add_markers(fig.alpha, x = ~r2, y = ~r3, z = ~alpha1, size = 2, symbol = 0, name = "alpha1")
+      
+      fig.alpha <- plotly::add_surface(fig.alpha, x = r2, y = r3, z = t(pre_alpha2), opacity = 0.98)
+      fig.alpha <- plotly::add_data(fig.alpha, data2)
+      fig.alpha <- plotly::add_markers(fig.alpha, x=~r2, y=~r3, z=~alpha2, size=2,symbol= 100,name = "alpha2")
+      
+      fig.alpha <- plotly::add_surface(fig.alpha, x = r2, y = r3, z = t(pre_alpha3), opacity = 0.98)
+      fig.alpha <- plotly::add_data(fig.alpha, data3)
+      fig.alpha <- plotly::add_markers(fig.alpha, x=~r2, y=~r3, z=~alpha3, size=2,symbol= 200,name = "alpha3")
+      fig.alpha <- plotly::layout(fig.alpha, scene=list(camera=list(eye=list(x=2, y=-1, z=0.34)),
+                                                        xaxis = list(title = "r2"),
+                                                        yaxis = list(title = "r3"),
+                                                        zaxis = list(title = "Optimal alpha")))
     }
     # obtain the optimal power at cutoff of r2 and r3 to decide whether cut or not
     y <- function(x){
